@@ -4,16 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Google Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            margin: 20px 0;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 800px; /* Set a maximum width */
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100vh; /* Adjust height to take up the viewport */
+            border: none; /* Remove border */
+        }
+    </style>
 </head>
 <body>
     <h1>Fill Out the Form</h1>
-    <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScLVm7DCxOxpvQ8LtSbs26ysRh77faV-zWg7suaYbqpAg3QQA/viewform?embedded=true" 
-            width="640" 
-            height="2505" 
-            frameborder="0" 
-            marginheight="0" 
-            marginwidth="0">
-        Loading…
-    </iframe>
+    <div class="form-container">
+        <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScLVm7DCxOxpvQ8LtSbs26ysRh77faV-zWg7suaYbqpAg3QQA/viewform?embedded=true">
+            Loading…
+        </iframe>
+    </div>
 </body>
 </html>
