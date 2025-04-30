@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Calculator</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 700px; margin: auto; }
+    input, select { margin: 8px 0; padding: 8px; width: 100%; }
+    button { padding: 10px; margin-top: 10px; width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background-color: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h2>Loan Calculator</h2>
+
+  <label>Total Loan Amount</label>
+  <input type="number" id="loanAmount" placeholder="Enter total loan amount">
+
+  <label>Start Date</label>
+  <input type="date" id="startDate">
+
+  <label>Annual Interest Rate (%)</label>
+  <input type="number" id="interestRate" step="0.01" placeholder="e.g. 12">
+
+  <label>Monthly Repayment Amount</label>
+  <input type="number" id="monthlyRepayment" placeholder="Enter monthly repayment amount">
+
+  <label>Months to Simulate</label>
+  <input type="number" id="months" placeholder="e.g. 12">
+
+  <button onclick="calculateLoan()">Calculate</button>
+
+  <div id="result"></div>
+
+  <script>
+    function calculateLoan() {
+      const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+      const startDate = new Date(document.getElementById('startDate').value);
+      const annualRate = parseFloat(document.getElementById('interestRate').value);
+      const monthlyRepayment = parseFloat(document.getElementById('monthlyRepayment').value);
+      const months = parseInt(document.getElementById('months').value);
+
+      let balance = loanAmount;
+      const monthlyRate = annualRate / 12 / 100;
+      const rows = [];
+
+      for (let i = 0; i < months; i++) {
+        if (balance <= 0) break;
+        const interest = balance * monthlyRate;
+        const principal = Math.min(monthlyRepayment - interest, balance);
+        balance -= principal;
+
+        const date = new Date(startDate);
+        date.setMonth(startDate.getMonth() + i);
+
+        rows.push(`<tr>
+          <td>${date.toISOString().split('T')[0]}</td>
+          <td>${interest.toFixed(2)}</td>
+          <td>${principal.toFixed(2)}</td>
+          <td>${balance.toFixed(2)}</td>
+        </tr>`);
+      }
+
+      document.getElementById('result').innerHTML = `
+        <table>
+          <tr><th>Date</th><th>Interest</th><th>Principal Paid</th><th>Remaining Balance</th></tr>
+          ${rows.join('')}
+        </table>
+      `;
+    }
+  </script>
+</body>
+</html>
