@@ -2,75 +2,177 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Loan Calculator</title>
   <style>
-    body { font-family: Arial; padding: 20px; max-width: 700px; margin: auto; }
-    input, select { margin: 8px 0; padding: 8px; width: 100%; }
-    button { padding: 10px; margin-top: 10px; width: 100%; }
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
+    label, input { display: block; margin-bottom: 10px; }
+    input[type="number"], input[type="date"], input[type="month"] { width: 200px; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background-color: #f2f2f2; }
+    th { background-color: #f0f0f0; }
+    .summary { margin-top: 20px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h2>Loan Calculator</h2>
 
-  <label>Total Loan Amount</label>
-  <input type="number" id="loanAmount" placeholder="Enter total loan amount">
+<h2>Loan Calculator</h2>
 
-  <label>Start Date</label>
-  <input type="date" id="startDate">
+<label>Loan Amount: <input type="number" id="loanAmount" /></label>
+<label>Annual Interest Rate (%): <input type="number" id="interestRate" /></label>
+<label>Start Date (Loan Disbursed): <input type="date" id="startDate" /></label>
+<label>End Date (Final Simulation Month): <input type="date" id="endDate" /></label>
 
-  <label>Annual Interest Rate (%)</label>
-  <input type="number" id="interestRate" step="0.01" placeholder="e.g. 12">
+<button onclick="generateRepaymentInputs()">Generate Monthly Inputs</button>
 
-  <label>Monthly Repayment Amount</label>
-  <input type="number" id="monthlyRepayment" placeholder="Enter monthly repayment amount">
+<div id="repaymentForm" style="margin-top:20px;"></div>
+<div id="result"></div>
 
-  <label>Months to Simulate</label>
-  <input type="number" id="months" placeholder="e.g. 12">
+<script>
+function getMonthDiff(d1, d2) {
+  return (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+}
 
-  <button onclick="calculateLoan()">Calculate</button>
+function generateRepaymentInputs() {
+  const start = new Date(document.getElementById('startDate').value);
+  const end = new Date(document.getElementById('endDate').value);
+  const container = document.getElementById('repaymentForm');
+  container.innerHTML = '';
 
-  <div id="result"></div>
+  if (!start || !end || end <= start) {
+    alert("Please enter valid dates.");
+    return;
+  }
 
-  <script>
-    function calculateLoan() {
-      const loanAmount = parseFloat(document.getElementById('loanAmount').value);
-      const startDate = new Date(document.getElementById('startDate').value);
-      const annualRate = parseFloat(document.getElementById('interestRate').value);
-      const monthlyRepayment = parseFloat(document.getElementById('monthlyRepayment').value);
-      const months = parseInt(document.getElementById('months').value);
+  const firstRepaymentDate = new Date(start);
+  firstRepaymentDate.setMonth(firstRepaymentDate.getMonth() + 1);
 
-      let balance = loanAmount;
-      const monthlyRate = annualRate / 12 / 100;
-      const rows = [];
+  const months = getMonthDiff(firstRepaymentDate, end) + 1;
 
-      for (let i = 0; i < months; i++) {
-        if (balance <= 0) break;
-        const interest = balance * monthlyRate;
-        const principal = Math.min(monthlyRepayment - interest, balance);
-        balance -= principal;
+  let html = '<h3>Repayment Entries</h3>';
+  for (let i = 0; i < months; i++) {
+    const monthDate = new Date(firstRepaymentDate);
+    monthDate.setMonth(monthDate.getMonth() + i);
+    const monthStr = monthDate.toISOString().slice(0, 7);
 
-        const date = new Date(startDate);
-        date.setMonth(startDate.getMonth() + i);
+    html += `
+      <label>${monthStr} - Amount Paid:
+        <input type="month" value="${monthStr}" readonly />
+        <input type="number" name="repay-${monthStr}" placeholder="Amount" />
+      </label>
+    `;
+  }
 
-        rows.push(`<tr>
-          <td>${date.toISOString().split('T')[0]}</td>
-          <td>${interest.toFixed(2)}</td>
-          <td>${principal.toFixed(2)}</td>
-          <td>${balance.toFixed(2)}</td>
-        </tr>`);
-      }
+  html += `<button onclick="calculate()">Calculate Repayments</button>`;
+  container.innerHTML = html;
+}
 
-      document.getElementById('result').innerHTML = `
-        <table>
-          <tr><th>Date</th><th>Interest</th><th>Principal Paid</th><th>Remaining Balance</th></tr>
-          ${rows.join('')}
-        </table>
-      `;
+function calculate() {
+  const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+  const interestRate = parseFloat(document.getElementById('interestRate').value) / 100 / 12;
+  const start = new Date(document.getElementById('startDate').value);
+  const end = new Date(document.getElementById('endDate').value);
+  const firstRepayment = new Date(start);
+  firstRepayment.setMonth(firstRepayment.getMonth() + 1);
+
+  const months = getMonthDiff(firstRepayment, end) + 1;
+  let currentDate = new Date(firstRepayment);
+  let principal = loanAmount;
+  let pendingInterest = 0;
+  let totalPaid = 0;
+  let totalInterestPaid = 0;
+
+  let rows = [];
+
+  for (let i = 0; i < months; i++) {
+    const monthStr = currentDate.toISOString().slice(0, 7);
+    const input = document.querySelector(`[name="repay-${monthStr}"]`);
+    const paid = parseFloat(input?.value || 0);
+    totalPaid += paid;
+
+    const thisMonthInterest = +(principal * interestRate).toFixed(2);
+    let paidToPendingInterest = 0;
+    let paidToCurrentInterest = 0;
+    let paidToPrincipal = 0;
+
+    let balance = paid;
+
+    // Pay old pending interest
+    if (balance >= pendingInterest) {
+      paidToPendingInterest = pendingInterest;
+      balance -= pendingInterest;
+      pendingInterest = 0;
+    } else {
+      paidToPendingInterest = balance;
+      pendingInterest -= balance;
+      balance = 0;
     }
-  </script>
+
+    // Pay current month interest
+    if (balance >= thisMonthInterest) {
+      paidToCurrentInterest = thisMonthInterest;
+      balance -= thisMonthInterest;
+    } else {
+      paidToCurrentInterest = balance;
+      pendingInterest += (thisMonthInterest - balance);
+      balance = 0;
+    }
+
+    // Pay principal if any left
+    paidToPrincipal = balance;
+    principal = +(principal - paidToPrincipal).toFixed(2);
+    if (principal < 0) principal = 0;
+
+    totalInterestPaid += paidToPendingInterest + paidToCurrentInterest;
+
+    rows.push({
+      month: monthStr,
+      paid,
+      paidToPendingInterest,
+      paidToCurrentInterest,
+      paidToPrincipal,
+      pendingInterest: pendingInterest.toFixed(2),
+      principal: principal.toFixed(2)
+    });
+
+    currentDate.setMonth(currentDate.getMonth() + 1);
+  }
+
+  // Render Table
+  let html = `<table>
+    <tr>
+      <th>Month</th>
+      <th>Paid</th>
+      <th>To Old Interest</th>
+      <th>To Current Interest</th>
+      <th>To Principal</th>
+      <th>Pending Interest</th>
+      <th>Remaining Principal</th>
+    </tr>`;
+
+  rows.forEach(row => {
+    html += `<tr>
+      <td>${row.month}</td>
+      <td>${row.paid.toFixed(2)}</td>
+      <td>${row.paidToPendingInterest.toFixed(2)}</td>
+      <td>${row.paidToCurrentInterest.toFixed(2)}</td>
+      <td>${row.paidToPrincipal.toFixed(2)}</td>
+      <td>${row.pendingInterest}</td>
+      <td>${row.principal}</td>
+    </tr>`;
+  });
+
+  html += `</table>`;
+
+  html += `<div class="summary">
+    <p>Total Paid: ₹${totalPaid.toFixed(2)}</p>
+    <p>Total Interest Paid: ₹${totalInterestPaid.toFixed(2)}</p>
+    <p>Pending Interest: ₹${pendingInterest.toFixed(2)}</p>
+    <p>Remaining Principal: ₹${principal.toFixed(2)}</p>
+  </div>`;
+
+  document.getElementById('result').innerHTML = html;
+}
+</script>
+
 </body>
 </html>
