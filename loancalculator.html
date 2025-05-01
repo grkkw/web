@@ -4,13 +4,117 @@
   <meta charset="UTF-8">
   <title>Loan Calculator</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
-    label, input { display: block; margin-bottom: 10px; }
-    input[type="number"], input[type="date"], input[type="month"] { width: 200px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background-color: #f0f0f0; }
-    .summary { margin-top: 20px; font-weight: bold; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f9f9f9;
+      color: #333;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    label {
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+      font-weight: 500;
+      color: #444;
+    }
+
+    input[type="number"],
+    input[type="date"],
+    input[type="month"] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 250px;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #e0e0e0;
+    }
+
+    th {
+      background: #f0f4f8;
+      color: #333;
+    }
+
+    tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+
+    .summary {
+      margin-top: 30px;
+      background: #eaf2f8;
+      padding: 20px;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .summary p {
+      margin: 10px 0;
+      color: #2c3e50;
+    }
+
+    #repaymentForm label {
+      margin-bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    #repaymentForm input[type="month"] {
+      width: auto;
+      font-weight: bold;
+      background: #ecf0f1;
+      border: none;
+    }
+
+    @media (max-width: 600px) {
+      input[type="number"], input[type="date"], input[type="month"] {
+        width: 100%;
+      }
+
+      label {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
   </style>
 </head>
 <body>
@@ -96,7 +200,6 @@ function calculate() {
 
     let balance = paid;
 
-    // Pay old pending interest
     if (balance >= pendingInterest) {
       paidToPendingInterest = pendingInterest;
       balance -= pendingInterest;
@@ -107,7 +210,6 @@ function calculate() {
       balance = 0;
     }
 
-    // Pay current month interest
     if (balance >= thisMonthInterest) {
       paidToCurrentInterest = thisMonthInterest;
       balance -= thisMonthInterest;
@@ -117,7 +219,6 @@ function calculate() {
       balance = 0;
     }
 
-    // Pay principal if any left
     paidToPrincipal = balance;
     principal = +(principal - paidToPrincipal).toFixed(2);
     if (principal < 0) principal = 0;
@@ -137,7 +238,6 @@ function calculate() {
     currentDate.setMonth(currentDate.getMonth() + 1);
   }
 
-  // Render Table
   let html = `<table>
     <tr>
       <th>Month</th>
