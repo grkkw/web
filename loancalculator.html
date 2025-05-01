@@ -104,6 +104,28 @@
       background: #ecf0f1;
       border: none;
     }
+    .repayment-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .repayment-entry {
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 8px;
+  background: #fff;
+  width: 220px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .repayment-entry label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #333;
+    }
+
 
     @media (max-width: 600px) {
       input[type="number"], input[type="date"], input[type="month"] {
@@ -149,24 +171,26 @@ function generateRepaymentInputs() {
 
   const firstRepaymentDate = new Date(start);
   firstRepaymentDate.setMonth(firstRepaymentDate.getMonth() + 1);
-
   const months = getMonthDiff(firstRepaymentDate, end) + 1;
 
-  let html = '<h3>Repayment Entries</h3>';
+  let html = `<h3>Repayment Entries</h3><div class="repayment-grid">`;
+
   for (let i = 0; i < months; i++) {
     const monthDate = new Date(firstRepaymentDate);
     monthDate.setMonth(monthDate.getMonth() + i);
     const monthStr = monthDate.toISOString().slice(0, 7);
+    const monthLabel = monthDate.toLocaleString('default', { month: 'long', year: 'numeric' });
 
     html += `
-      <label>${monthStr} - Amount Paid:
+      <div class="repayment-entry">
+        <label>${monthStr} - ${monthLabel}</label>
         <input type="month" value="${monthStr}" readonly />
         <input type="number" name="repay-${monthStr}" placeholder="Amount" />
-      </label>
+      </div>
     `;
   }
 
-  html += `<button onclick="calculate()">Calculate Repayments</button>`;
+  html += `</div><button onclick="calculate()">Calculate Repayments</button>`;
   container.innerHTML = html;
 }
 
